@@ -19,14 +19,25 @@ export class PocketbaseService {
   }
 
   // Example: Get records from a collection
-  getRecords(collection: string) {
-    return this.pb.collection(collection).getFullList();
+  getRecords(collection: string, options?: any) {
+    return this.pb.collection(collection).getFullList({
+      ...options,
+    });
   }
 
+  // Example: Get a single record from
+  getRecord(collection: string, id: string, options?: any) {
+    return this.pb.collection(collection).getOne(id, {
+      ...options,
+    });
+  }
+
+  // Example: Get a collection
   getCollection(collection: string) {
     return this.pb.collection(collection);
   }
 
+  // Example: Get the auth store
   getAuthStore() {
     return this.pb.authStore;
   }
@@ -34,6 +45,15 @@ export class PocketbaseService {
   // Example: Create a new record in a collection
   createRecord(collection: string, data: any) {
     return this.pb.collection(collection).create(data);
+  }
+
+  updateRecord(collection: string, id: string, data: any) {
+    return this.pb.collection(collection).update(id, data);
+  }
+
+  // Example: Delete a record from a collection
+  deleteRecord(collection: string, id: string) {
+    return this.pb.collection(collection).delete(id);
   }
 
   // Example: Authenticate user

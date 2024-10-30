@@ -1,9 +1,9 @@
-import { Component, inject, OnDestroy, OnInit } from '@angular/core';
-import { PocketbaseService } from './pocketbase.service';
-import { lastValueFrom } from 'rxjs';
-import { AuthMethodsList, AuthProviderInfo } from 'pocketbase';
 import { CommonModule } from '@angular/common';
+import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { AuthMethodsList, AuthModel, AuthProviderInfo } from 'pocketbase';
+import { PocketbaseService } from './pocketbase.service';
+import { ToastrService } from 'ngx-toastr';
 
 @Component({
   selector: 'app-root',
@@ -13,53 +13,77 @@ import { FormsModule } from '@angular/forms';
   styleUrls: ['./app.component.scss'],
 })
 export class AppComponent implements OnInit, OnDestroy {
-  userRecords: any[] = [];
+  userRecords = signal<any[]>([]);
+  votesToVote = signal<any[]>([]);
+
   authMethods?: AuthMethodsList;
+
+  loggedInUser = signal<AuthModel | undefined>(undefined);
 
   username = '';
   password = '';
 
-  get loggedInUser() {
-    return this.pbService.getAuthStore().model;
-  }
-
+  toastr = inject(ToastrService);
   pbService = inject(PocketbaseService);
 
-  async ngOnInit(): Promise<void> {
-    await this.fetchRecords();
-    await this.fetchAuthMethods();
-
+  // Example: Subscribe to changes in the users and votes collections
+  constructor() {
     // Subscribe to changes in any users record
     this.pbService.getCollection('users').subscribe(
       '*',
       (e) => {
-        console.log(e.action);
-        console.log(e.record);
-
         // add record
         if (e.action === 'create') {
           console.log('User created:', e);
-          this.userRecords.push(e.record);
+          this.userRecords.update(currentValue => [...currentValue, e.record]);
         }
       },
       {
         /* other options like expand, custom headers, etc. */
       }
     );
+
+    this.pbService.getCollection('votes').subscribe(
+      '*',
+      async (e) => {
+        // add record
+        if (e.action === 'update') {
+          console.log('Vote updated:', e);
+          const vote = this.votesToVote().find(vote => vote.id === e.record.id);
+          const index = this.votesToVote().indexOf(vote!);
+
+          const currentVotes = this.votesToVote();
+
+          currentVotes[index] = e.record;
+          this.votesToVote.set(currentVotes);
+        }
+      },
+      {
+        expand: 'created_by'
+      }
+    );
   }
 
-  ngOnDestroy(): void {
-    this.pbService.getCollection('users').unsubscribe();
+  // Example: setting records
+  async ngOnInit(): Promise<void> {
+    await this.setRecords();
+    await this.setAuthMethods();
+    await this.setVotesToVote();
   }
+
 
   async login(provider: AuthProviderInfo) {
     await this.pbService
       .getCollection('users')
       .authWithOAuth2({ provider: provider.name });
-    console.log('Auth token:', this.pbService.getAuthStore().token);
+
+    console.log('Auth:', this.pbService.getAuthStore().token);
+
+    this.loggedInUser.set(this.pbService.getAuthStore().model);
+    this.toastr.success('User logged in successfully');
   }
 
-  async signup() {
+  async signupOrLogin() {
     try {
       const newUser = await this.pbService.getCollection('users').create({
         username: this.username,
@@ -68,29 +92,75 @@ export class AppComponent implements OnInit, OnDestroy {
       });
 
       console.log('User created:', newUser);
+      this.toastr.success('User created successfully');
     } catch (e) {
-      console.log('User already exists');
+      console.log('User already existed, logging in');
+      this.toastr.info('User already existed, logging in');
     }
 
     // Log the user in
     const authData = await this.pbService
       .getCollection('users')
       .authWithPassword(this.username, this.password);
-    console.log('User logged in:', authData);
 
-    await this.fetchRecords();
+    console.log('User logged in:', authData);
+    this.toastr.success('User logged in successfully');
+
+    this.loggedInUser.set(authData.record);
+    await this.setRecords();
   }
 
   logout() {
     this.pbService.getAuthStore().clear();
-    console.log('logged out');
+    this.loggedInUser.set(undefined);
+    console.log('User logged out');
+    this.toastr.info('User logged out');
   }
 
-  private async fetchRecords() {
-    this.userRecords = (await this.pbService.getRecords('users')) as any[];
+  voteForOptionA(voteId: string) {
+    const vote = this.votesToVote().find(vote => vote.id === voteId);
+
+    if (vote.users_who_voted.includes(this.loggedInUser()!['id'])) {
+      this.toastr.error('You have already voted for this poll');
+      return;
+    }
+
+    this.pbService.updateRecord('votes', vote!.id, {
+      option_a: vote!.option_a + 1,
+      users_who_voted: [...vote!.users_who_voted, this.loggedInUser()!['id']]
+    })
   }
 
-  private async fetchAuthMethods() {
+  voteForOptionB(voteId: string) {
+    const vote = this.votesToVote().find(vote => vote.id === voteId);
+
+    if (vote.users_who_voted.includes(this.loggedInUser()!['id'])) {
+      this.toastr.error('You have already voted for this poll');
+      return;
+    }
+
+    this.pbService.updateRecord('votes', vote!.id, {
+      option_b: vote!.option_b + 1,
+      users_who_voted: [...vote!.users_who_voted, this.loggedInUser()!['id']]
+    })
+  }
+
+  private async setRecords() {
+    this.userRecords.set((await this.pbService.getRecords('users')) as any[]);
+  }
+
+  private async setAuthMethods() {
     this.authMethods = await this.pbService.getAuthMethods();
+  }
+
+  private async setVotesToVote() {
+    this.votesToVote.set((await this.pbService.getRecords('votes',
+      { expand: 'created_by' }
+    )) as any[]);
+  }
+
+  ngOnDestroy(): void {
+    this.pbService.getCollection('users').unsubscribe('*'); // Unsubscribe from all events
+    this.pbService.getCollection('votes').unsubscribe('*'); // Unsubscribe from all events
   }
 }

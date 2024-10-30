@@ -1,6 +1,5 @@
-<!-- list auth methods -->
-
-@if(!loggedInUser){
+<!-- Not logged in -->
+@if(!loggedInUser()){
 @if(!!authMethods && authMethods.authProviders.length > 0) {
 <section>
   <div class="grid">
@@ -9,43 +8,71 @@
   </div>
 </section>
 <section>
-  <form (submit)="signup()">
+  <form (submit)="signupOrLogin()">
     <fieldset role="group">
       <input [(ngModel)]="username" name="username" type="username" placeholder="Enter your username"
         autocomplete="username" />
       <input [(ngModel)]="password" name="password" type="password" placeholder="Enter your password"
         autocomplete="password" />
-      <input class="secondary" type="submit" value="Login" />
+      <input class="secondary" type="submit" value="Guest Signup and Login" />
     </fieldset>
   </form>
 </section>
-} @else {
+}
+@else {
 <progress></progress>
 }
 }
 
-<!-- Logged in as -->
+<!-- Logged in -->
+@if(loggedInUser()){
 <section>
-  <div *ngIf="loggedInUser">
-    <span>Logged in as: {{ loggedInUser['username'] }}</span>
+  <div>
+    <span>Logged in as: {{ loggedInUser()!['username'] }}</span>
   </div>
 </section>
-
 <!-- Logout button -->
 <section>
-  <button *ngIf="loggedInUser" (click)="logout()">Logout</button>
+  <button *ngIf="loggedInUser()" (click)="logout()">Logout</button>
 </section>
 
 <!-- List users -->
 <section>
-  <h2>Users:</h2>
-  @defer (when !!userRecords && userRecords.length > 0) {
-  @for (user of userRecords; track $index) {
-  <div>
-    <span>{{ user.username }}</span>
-  </div>
-  }
-  } @placeholder {
-  <article aria-busy="true"></article>
-  }
+  <article>
+    <header>Users:</header>
+    @defer (when !!userRecords() && userRecords().length > 0) {
+    @for (user of userRecords(); track $index) {
+    <div>
+      <span>{{ user.username }}</span>
+    </div>
+    }
+    } @placeholder {
+    <article aria-busy="true"></article>
+    }
+  </article>
 </section>
+
+<section>
+  <article>
+    <header>Votes to vote</header>
+    @defer (when !!votesToVote() && votesToVote().length > 0) {
+    @for (vote of votesToVote(); track $index) {
+    <article>
+      <header class="grid" style="text-align: center;">
+        <span>{{ vote.title }}</span>
+      </header>
+      <div class="grid" style="text-align: center;">
+        <button (click)="voteForOptionA(vote.id)">{{vote.option_a}} votes for {{vote.option_a_text}}</button>
+        <button (click)="voteForOptionB(vote.id)">{{vote.option_b}} votes for {{vote.option_b_text}}</button>
+      </div>
+      <footer>
+        <span>By: {{vote.expand?.created_by?.username}}</span>
+      </footer>
+    </article>
+    }
+    } @placeholder {
+    <article aria-busy="true"></article>
+    }
+  </article>
+</section>
+}
