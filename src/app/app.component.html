@@ -14,8 +14,8 @@
         autocomplete="username" />
       <input [(ngModel)]="password" name="password" type="password" placeholder="Enter your password"
         autocomplete="password" />
-      <input class="secondary" type="submit" value="Guest Signup and Login" />
     </fieldset>
+    <input class="secondary" type="submit" value="Guest Signup and Login" />
   </form>
 </section>
 }
@@ -25,7 +25,7 @@
 }
 
 <!-- Logged in -->
-@if(loggedInUser()){
+@if(!!loggedInUser()){
 <section>
   <div>
     <span>Logged in as: {{ loggedInUser()!['username'] }}</span>
