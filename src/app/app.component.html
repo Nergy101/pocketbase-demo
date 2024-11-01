@@ -54,7 +54,9 @@
 
 <section>
   <article>
-    <header>Votes to vote</header>
+    <header>Polls to vote</header>
+    <span>You can only vote <b>once</b> for every poll. Vote wisely!</span>
+
     @defer (when !!votesToVote() && votesToVote().length > 0) {
     @for (vote of votesToVote(); track $index) {
     <article>

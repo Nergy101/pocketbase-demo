@@ -28,6 +28,13 @@ export class AppComponent implements OnInit, OnDestroy {
 
   // Example: Subscribe to changes in the users and votes collections
   constructor() {
+
+
+    const user = localStorage.getItem('auth');
+    if (user) {
+      this.loggedInUser.set(JSON.parse(user));
+    }
+
     // Subscribe to changes in any users record
     this.pbService.getCollection('users').subscribe(
       '*',
@@ -54,12 +61,12 @@ export class AppComponent implements OnInit, OnDestroy {
 
           const currentVotes = this.votesToVote();
 
+          e.record.expand = {}
+          e.record.expand['created_by'] = await this.pbService.getRecord('users', e.record['created_by']);
+
           currentVotes[index] = e.record;
           this.votesToVote.set(currentVotes);
         }
-      },
-      {
-        expand: 'created_by'
       }
     );
   }
@@ -79,11 +86,20 @@ export class AppComponent implements OnInit, OnDestroy {
 
     console.log('Auth:', this.pbService.getAuthStore().token);
 
+    localStorage.setItem('auth', JSON.stringify(this.pbService.getAuthStore().model));
+
     this.loggedInUser.set(this.pbService.getAuthStore().model);
     this.toastr.success('User logged in successfully');
   }
 
   async signupOrLogin() {
+
+    if (this.username === '' || this.password === '') {
+
+      this.toastr.error('Username and password are required');
+      return
+    }
+
     try {
       const newUser = await this.pbService.getCollection('users').create({
         username: this.username,
@@ -94,6 +110,7 @@ export class AppComponent implements OnInit, OnDestroy {
       console.log('User created:', newUser);
       this.toastr.success('User created successfully');
     } catch (e) {
+
       console.log('User already existed, logging in');
       this.toastr.info('User already existed, logging in');
     }
@@ -113,6 +130,7 @@ export class AppComponent implements OnInit, OnDestroy {
   logout() {
     this.pbService.getAuthStore().clear();
     this.loggedInUser.set(undefined);
+    localStorage.removeItem('auth');
     console.log('User logged out');
     this.toastr.info('User logged out');
   }

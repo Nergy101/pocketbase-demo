@@ -13,10 +13,10 @@ EXPOSE 80
 
 # local:
 # docker auth
-# docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7 -t nergy101/pocketbase-demo:latest --push .
+# docker buildx build --platform linux/amd64,linux/arm64 -t nergy101/pocketbase-demo:latest --push .
 # docker login
 # docker push nergy101/pocketbase-demo:latest
 # on VM:
-# docker pull nergy101/pocketbase-demo:latest
-# docker stop pocketbase-demo && docker rm pocketbase-demo
+# docker pull nergy101/pocketbase-demo:latest &&
+# docker stop pocketbase-demo && docker rm pocketbase-demo &&
 # docker run --restart unless-stopped -p 4002:80 -d --name pocketbase-demo nergy101/pocketbase-demo:latest
