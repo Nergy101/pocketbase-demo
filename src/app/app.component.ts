@@ -50,7 +50,7 @@ export class AppComponent implements OnInit, OnDestroy {
       }
     );
 
-    this.pbService.getCollection('votes').subscribe(
+    this.pbService.getCollection('polls').subscribe(
       '*',
       async (e) => {
         // add record
@@ -143,7 +143,7 @@ export class AppComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.pbService.updateRecord('votes', vote!.id, {
+    this.pbService.updateRecord('polls', vote!.id, {
       option_a: vote!.option_a + 1,
       users_who_voted: [...vote!.users_who_voted, this.loggedInUser()!['id']]
     })
@@ -157,7 +157,7 @@ export class AppComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.pbService.updateRecord('votes', vote!.id, {
+    this.pbService.updateRecord('polls', vote!.id, {
       option_b: vote!.option_b + 1,
       users_who_voted: [...vote!.users_who_voted, this.loggedInUser()!['id']]
     })
@@ -172,13 +172,13 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   private async setVotesToVote() {
-    this.votesToVote.set((await this.pbService.getRecords('votes',
+    this.votesToVote.set((await this.pbService.getRecords('polls',
       { expand: 'created_by' }
     )) as any[]);
   }
 
   ngOnDestroy(): void {
     this.pbService.getCollection('users').unsubscribe('*'); // Unsubscribe from all events
-    this.pbService.getCollection('votes').unsubscribe('*'); // Unsubscribe from all events
+    this.pbService.getCollection('polls').unsubscribe('*'); // Unsubscribe from all events
   }
 }

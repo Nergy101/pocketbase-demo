@@ -28,7 +28,16 @@
 @if(!!loggedInUser()){
 <section>
   <div>
+
+  </div>
+  <div style="display:flex; align-items: center;">
     <span>Logged in as: {{ loggedInUser()!['username'] }}</span>
+
+    <img style="max-height: 2em; border-radius: 1em" [src]="
+                                        'https://api.dicebear.com/7.x/thumbs/svg?seed=' +
+                                        loggedInUser()!['username'] +
+                                        '&backgroundColor=f1f4dc,f88c49,ffd5dc,ffdfbf,d1d4f9,c0aede&backgroundType=gradientLinear&shapeColor=69d2e7,f1f4dc,f88c49'
+                                      " alt="avatar" />
   </div>
 </section>
 <!-- Logout button -->
