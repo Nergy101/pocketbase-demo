@@ -1,89 +1,120 @@
 <!-- Not logged in -->
-@if(!loggedInUser()){
-@if(!!authMethods && authMethods.authProviders.length > 0) {
-<section>
-  <div class="grid">
-    <button *ngFor="let provider of authMethods.authProviders" (click)="login(provider)">Login with {{
-      provider.displayName }}</button>
-  </div>
-</section>
-<section>
-  <form (submit)="signupOrLogin()">
-    <fieldset role="group">
-      <input [(ngModel)]="username" name="username" type="username" placeholder="Enter your username"
-        autocomplete="username" />
-      <input [(ngModel)]="password" name="password" type="password" placeholder="Enter your password"
-        autocomplete="password" />
-    </fieldset>
-    <input class="secondary" type="submit" value="Guest Signup and Login" />
-  </form>
-</section>
-}
-@else {
-<progress></progress>
-}
+@if (!loggedInUser()) {
+    @if (!!authMethods && authMethods.authProviders.length > 0) {
+        <section>
+            <div class="grid">
+                <button
+                    *ngFor="let provider of authMethods.authProviders"
+                    (click)="login(provider)"
+                >
+                    Login with {{ provider.displayName }}
+                </button>
+            </div>
+        </section>
+        <section>
+            <form (submit)="signupOrLogin()">
+                <fieldset role="group">
+                    <input
+                        [(ngModel)]="username"
+                        name="username"
+                        type="username"
+                        placeholder="Enter your username"
+                        autocomplete="username"
+                    />
+                    <input
+                        [(ngModel)]="password"
+                        name="password"
+                        type="password"
+                        placeholder="Enter your password"
+                        autocomplete="password"
+                    />
+                </fieldset>
+                <input
+                    class="secondary"
+                    type="submit"
+                    value="Guest Signup and Login"
+                />
+            </form>
+        </section>
+    } @else {
+        <progress></progress>
+    }
 }
 
 <!-- Logged in -->
-@if(!!loggedInUser()){
-<section>
-  <div>
+@if (!!loggedInUser()) {
+    <section>
+        <div></div>
+        <div style="display: flex; align-items: center">
+            <span>Logged in as: {{ loggedInUser()!["username"] }}</span>
 
-  </div>
-  <div style="display:flex; align-items: center;">
-    <span>Logged in as: {{ loggedInUser()!['username'] }}</span>
+            <img
+                style="max-height: 2em; border-radius: 1em"
+                [src]="
+                    'https://api.dicebear.com/7.x/thumbs/svg?seed=' +
+                    loggedInUser()!['username'] +
+                    '&backgroundColor=f1f4dc,f88c49,ffd5dc,ffdfbf,d1d4f9,c0aede&backgroundType=gradientLinear&shapeColor=69d2e7,f1f4dc,f88c49'
+                "
+                alt="avatar"
+            />
+        </div>
+    </section>
+    <!-- Logout button -->
+    <section>
+        <button *ngIf="loggedInUser()" (click)="logout()">Logout</button>
+    </section>
 
-    <img style="max-height: 2em; border-radius: 1em" [src]="
-                                        'https://api.dicebear.com/7.x/thumbs/svg?seed=' +
-                                        loggedInUser()!['username'] +
-                                        '&backgroundColor=f1f4dc,f88c49,ffd5dc,ffdfbf,d1d4f9,c0aede&backgroundType=gradientLinear&shapeColor=69d2e7,f1f4dc,f88c49'
-                                      " alt="avatar" />
-  </div>
-</section>
-<!-- Logout button -->
-<section>
-  <button *ngIf="loggedInUser()" (click)="logout()">Logout</button>
-</section>
+    <!-- List users -->
+    <section>
+        <article>
+            <header>Users:</header>
+            @defer (when !!userRecords() && userRecords().length > 0) {
+                @for (user of userRecords(); track $index) {
+                    <div>
+                        <span>{{ user.username }}</span>
+                    </div>
+                }
+            } @placeholder {
+                <article aria-busy="true"></article>
+            }
+        </article>
+    </section>
 
-<!-- List users -->
-<section>
-  <article>
-    <header>Users:</header>
-    @defer (when !!userRecords() && userRecords().length > 0) {
-    @for (user of userRecords(); track $index) {
-    <div>
-      <span>{{ user.username }}</span>
-    </div>
-    }
-    } @placeholder {
-    <article aria-busy="true"></article>
-    }
-  </article>
-</section>
+    <section>
+        <article>
+            <header>Polls to vote</header>
+            <span
+                >You can only vote <b>once</b> for every poll. Vote
+                wisely!</span
+            >
 
-<section>
-  <article>
-    <header>Polls to vote</header>
-    <span>You can only vote <b>once</b> for every poll. Vote wisely!</span>
-
-    @defer (when !!votesToVote() && votesToVote().length > 0) {
-    @for (vote of votesToVote(); track $index) {
-    <article>
-      <header class="grid" style="text-align: center;">
-        <span>{{ vote.title }}</span>
-      </header>
-      <div class="grid" style="text-align: center;">
-        <button (click)="voteForOptionA(vote.id)">{{vote.option_a}} votes for {{vote.option_a_text}}</button>
-        <button (click)="voteForOptionB(vote.id)">{{vote.option_b}} votes for {{vote.option_b_text}}</button>
-      </div>
-      <footer>
-        <span>By: {{vote.expand?.created_by?.username}}</span>
-      </footer>
-    </article>
-    }
-    } @placeholder {
-    <article aria-busy="true"></article>
-    }
-  </article>
-</section>
+            @defer (when !!votesToVote() && votesToVote().length > 0) {
+                @for (vote of votesToVote(); track $index) {
+                    <article>
+                        <header class="grid" style="text-align: center">
+                            <span>{{ vote.title }}</span>
+                        </header>
+                        <div class="grid" style="text-align: center">
+                            <button (click)="voteForOptionA(vote.id)">
+                                {{ vote.option_a }} votes for
+                                {{ vote.option_a_text }}
+                            </button>
+                            <button (click)="voteForOptionB(vote.id)">
+                                {{ vote.option_b }} votes for
+                                {{ vote.option_b_text }}
+                            </button>
+                        </div>
+                        <footer>
+                            <span
+                                >By:
+                                {{ vote.expand?.created_by?.username }}</span
+                            >
+                        </footer>
+                    </article>
+                }
+            } @placeholder {
+                <article aria-busy="true"></article>
+            }
+        </article>
+    </section>
 }
